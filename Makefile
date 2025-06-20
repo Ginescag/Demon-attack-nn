@@ -1,7 +1,8 @@
-# Variables
+
 CXX = g++
 CXXFLAGS = -Wall -O2 -std=c++17 -Ilibs/Arcade-Learning-Environment-0.6.1 -Isrc
-LDFLAGS = -Llibs/Arcade-Learning-Environment-0.6.1 -lale_interface -lz -lSDL
+LDFLAGS = -Llibs/Arcade-Learning-Environment-0.6.1 -Wl,-rpath,'$$ORIGIN/../libs/Arcade-Learning-Environment-0.6.1' -lale -lz -lSDL
+
 SRC_DIR = src
 BUILD_DIR = build
 

@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/gines/Escritorio/Demon-attack-nn/libs/Arcade-Learning-Environment-0.6.1/src/external/TinyMT/tinymt32.c
+tinymt32.h
+/home/gines/Escritorio/Demon-attack-nn/libs/Arcade-Learning-Environment-0.6.1/src/external/TinyMT/tinymt32.h
+
+/home/gines/Escritorio/Demon-attack-nn/libs/Arcade-Learning-Environment-0.6.1/src/external/TinyMT/tinymt32.h
+stdint.h
+-
+inttypes.h
+-
+

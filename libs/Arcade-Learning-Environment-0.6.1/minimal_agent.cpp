@@ -2,7 +2,7 @@
 #include <cmath>
 #include <cstdint>
 #include "src/ale_interface.hpp"
-#include <SDL.h>
+#include <SDL/SDL.h>
 #include "perceptron.hpp"
 #include <vector>
 
@@ -24,14 +24,7 @@ int32_t getBallX(ALEInterface& alei) {
 /// Do Next Agent Step
 ///////////////////////////////////////////////////////////////////////////////
 reward_t agentStep(ALEInterface& alei, Perceptron& model) {
-   static int32_t lives { alei.lives() };
    reward_t reward{0};
-
-   // When we loose a live, we need to press FIRE to start again
-   if (alei.lives() < lives) {
-      lives = alei.lives();
-      alei.act(PLAYER_A_FIRE);
-   }
 
    // Obtener observaciones y predecir la acción con el perceptrón
    auto playerX { getPlayerX(alei) };
@@ -44,8 +37,56 @@ reward_t agentStep(ALEInterface& alei, Perceptron& model) {
 
    if (action == 0)      { reward = alei.act(PLAYER_A_LEFT);  }
    else if (action == 1) { reward = alei.act(PLAYER_A_RIGHT); }
+   else { reward = alei.act(PLAYER_A_NOOP); } // Add a NOOP case
 
-   return reward + alei.act(PLAYER_A_NOOP);
+   return reward;
+}
+
+
+void clearScreen() {
+   // Clear the console screen
+   std::printf("\033[H\033[J");
+}
+void printRAM(ALEInterface& alei){
+   auto* RAM {alei.getRAM().array() };
+
+   size_t i{};
+   std::printf("\033[H");
+   std::printf("\nADDR || 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F");
+   std::printf("\n-------------------------------------------------------------");
+
+   for(uint16_t row{}; row < 8; ++row) {
+      std::printf("\n %02X  ||", row * 16);
+      for (uint16_t col{}; col < 16; ++col, ++i) {
+         std::printf(" %02X", RAM[i]);
+      }
+   }
+   std::printf("\n-------------------------------------------------------------");
+
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/// Do Next Manual Step
+///////////////////////////////////////////////////////////////////////////////
+reward_t manualStep(ALEInterface& alei) {
+   Action action = PLAYER_A_NOOP;
+   Uint8* keystates = SDL_GetKeyState(NULL);
+
+   if (keystates[SDLK_LEFT]) {
+      action = PLAYER_A_LEFT;
+   }
+   else if (keystates[SDLK_RIGHT]) {
+      action = PLAYER_A_RIGHT;
+   }
+   else if (keystates[SDLK_SPACE]) {
+      action = PLAYER_A_FIRE;
+   }
+   else if (keystates[SDLK_ESCAPE]) {
+      std::cout << "Exiting..." << std::endl;
+      exit(0);
+   }
+
+   return alei.act(action);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -66,7 +107,6 @@ int main(int argc, char **argv) {
    ALEInterface alei{};
    Perceptron model(2);
 
-
    // Check input parameter
    if (argc != 2)
       usage(argv[0]);
@@ -83,12 +123,15 @@ int main(int argc, char **argv) {
 
    // Main loop
    {
-      alei.act(PLAYER_A_FIRE);
       uint32_t step{};
       bool manualMode{false};
       SDL_Event ev;
+      int32_t lives { alei.lives() };
+      std::cout << "Juego iniciado. Pulsa 'M' para cambiar a modo manual." << std::endl;
+      clearScreen();
       while ( !alei.game_over() && step < maxSteps ) {
          // Check for keypresses to toggle manual mode
+         printRAM(alei);
          while (SDL_PollEvent(&ev)) {
             if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_m) {
                manualMode = !manualMode;
@@ -96,20 +139,20 @@ int main(int argc, char **argv) {
                          << std::endl;
             }
          }
+         
+         // When we loose a live, we need to press FIRE to start again
+         if (alei.lives() < lives) {
+            lives = alei.lives();
+            alei.act(PLAYER_A_FIRE);
+         }
 
          if (manualMode) {
-            SDL_PumpEvents();
-            Uint8* state = SDL_GetKeyState(NULL);
-            if (state[SDLK_LEFT]) {
-               totalReward += alei.act(PLAYER_A_LEFT);
-            } else if (state[SDLK_RIGHT]) {
-               totalReward += alei.act(PLAYER_A_RIGHT);
-            } else {
-               totalReward += alei.act(PLAYER_A_NOOP);
-            }
+            totalReward += manualStep(alei);
          } else {
             totalReward += agentStep(alei, model);
          }
+
+         SDL_Delay(1000 / 60); // ~60 FPS
          ++step;
       }
 

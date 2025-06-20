@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/gines/Escritorio/Demon-attack-nn/libs/Arcade-Learning-Environment-0.6.1/doc/examples/fifoInterfaceExample.cpp
+iostream
+-
+string
+-
+cstring
+-
+vector
+-
+cstdio
+-
+cstdlib
+-
+
