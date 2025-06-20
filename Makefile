@@ -1,16 +1,17 @@
 # Variables
 CXX = g++
-CXXFLAGS = -Wall -O2 -std=c++17 -Ilibs/Arcade-Learning-Environment-0.6.1/src
+CXXFLAGS = -Wall -O2 -std=c++17 -Ilibs/Arcade-Learning-Environment-0.6.1 -Isrc
 LDFLAGS = -Llibs/Arcade-Learning-Environment-0.6.1 -lale_interface -lz -lSDL
 SRC_DIR = src
 BUILD_DIR = build
 
 # Archivos fuente
-SRC_MAIN = $(SRC_DIR)/main.cpp $(SRC_DIR)/perceptron.cpp
+SRC_MAIN = libs/Arcade-Learning-Environment-0.6.1/minimal_agent.cpp \
+           $(SRC_DIR)/perceptron.cpp
 SRC_TRAIN = $(SRC_DIR)/train_model.cpp $(SRC_DIR)/perceptron.cpp
 
 # Archivos objeto
-OBJ_MAIN = $(SRC_MAIN:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
+OBJ_MAIN = $(BUILD_DIR)/minimal_agent.o $(BUILD_DIR)/perceptron.o
 OBJ_TRAIN = $(SRC_TRAIN:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
 
 # Ejecutables
@@ -26,6 +27,10 @@ $(MAIN_EXEC): $(OBJ_MAIN)
 $(TRAIN_EXEC): $(OBJ_TRAIN)
 	@echo "Compilando train_model..."
 	$(CXX) $^ -o $@ $(LDFLAGS)
+
+$(BUILD_DIR)/minimal_agent.o: libs/Arcade-Learning-Environment-0.6.1/minimal_agent.cpp
+	@mkdir -p $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(BUILD_DIR)

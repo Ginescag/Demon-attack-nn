@@ -23,6 +23,7 @@ public:
 
     // Obtener los pesos actuales (para guardarlos en un archivo)
     std::vector<float> getWeights() const;
+
 };
 
 #endif

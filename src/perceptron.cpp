@@ -42,3 +42,4 @@ void Perceptron::setWeights(const std::vector<float>& newWeights) {
 std::vector<float> Perceptron::getWeights() const {
     return weights;
 }
+
