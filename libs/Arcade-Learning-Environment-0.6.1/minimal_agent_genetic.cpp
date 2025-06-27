@@ -13,6 +13,7 @@ const int NUM_GENERATIONS = 1000;    // Número de generaciones a entrenar
 const int TOURNAMENT_SIZE = 5;       // Tamaño del torneo para selección
 const double MUTATION_RATE = 0.2;   // Probabilidad de que un gen (peso) mute
 const double MUTATION_STRENGTH = 0.3; // Magnitud de la mutación
+const double CROSSOVER_RATE = 0.8; // Probabilidad de aplicar crossover
 
 // --- HIPERPARÁMETROS DE LA RED NEURONAL ---
 const int NUM_FEATURES = 16;
@@ -140,6 +141,35 @@ void mutate(Individual& individual) {
     individual.net.setWeightsFromVector(weights);
 }
 
+// Función para realizar crossover entre dos individuos
+Individual crossover(const Individual& parent1, const Individual& parent2) {
+    Individual child;
+    auto weights1 = parent1.net.getWeightsAsVector();
+    auto weights2 = parent2.net.getWeightsAsVector();
+    auto child_weights = weights1;
+
+    std::mt19937 gen(std::random_device{}());
+    std::uniform_int_distribution<> point_dist(1, weights1.size() - 2); // Evitar extremos
+    std::uniform_real_distribution<> uniform_dist(0.0, 1.0);
+    
+    // Elegir tipo de crossover: punto único (70%) o uniforme (30%)
+    if (uniform_dist(gen) < 0.7) {
+        // Crossover de un punto
+        size_t crossover_point = point_dist(gen);
+        for (size_t i = 0; i < weights1.size(); ++i) {
+            child_weights[i] = (i < crossover_point) ? weights1[i] : weights2[i];
+        }
+    } else {
+        // Crossover uniforme
+        for (size_t i = 0; i < weights1.size(); ++i) {
+            child_weights[i] = (uniform_dist(gen) < 0.5) ? weights1[i] : weights2[i];
+        }
+    }
+
+    child.net.setWeightsFromVector(child_weights);
+    return child;
+}
+
 // --- PROGRAMA PRINCIPAL ---
 int main(int argc, char **argv) {
     if (argc < 2) {
@@ -187,11 +217,26 @@ int main(int argc, char **argv) {
             // 3.1. Elitismo: El mejor individuo pasa directamente
             new_population.push_back(population[0]);
 
-            // 3.2. Selección por torneo y mutación para el resto
+            // 3.2. Selección por torneo, crossover y mutación para el resto
+            std::mt19937 rand_gen(std::random_device{}());
+            std::uniform_real_distribution<> dist(0.0, 1.0);
+            
             while (new_population.size() < POPULATION_SIZE) {
-                Individual parent = tournamentSelection(population, TOURNAMENT_SIZE);
-                Individual child = parent; // Copiar al padre
-                mutate(child); // Aplicar mutación
+                // Seleccionar dos padres por torneo
+                Individual parent1 = tournamentSelection(population, TOURNAMENT_SIZE);
+                Individual parent2 = tournamentSelection(population, TOURNAMENT_SIZE);
+                
+                Individual child;
+                if (dist(rand_gen) < CROSSOVER_RATE) {
+                    // Aplicar crossover
+                    child = crossover(parent1, parent2);
+                } else {
+                    // Copiar uno de los padres directamente
+                    child = dist(rand_gen) < 0.5 ? parent1 : parent2;
+                }
+                
+                // Aplicar mutación
+                mutate(child);
                 new_population.push_back(child);
             }
 
