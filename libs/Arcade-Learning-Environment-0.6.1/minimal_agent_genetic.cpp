@@ -39,7 +39,7 @@ std::vector<double> extractAllFeatures(ALEInterface& alei) {
     return features;
 }
 
-// --- FUNCIONES AUXILIARES (Copiadas de minimal_agent.cpp) ---
+//FUNCIONES AUXILIARES (Copiadas de minimal_agent.cpp)
 std::vector<double> extractFeatures(ALEInterface& alei) {
     const auto& ram = alei.getRAM();
     std::vector<double> features;
@@ -71,13 +71,11 @@ std::vector<double> extractFeatures(ALEInterface& alei) {
         features.push_back(0.0);
     }
 
-    // Información adicional (por ejemplo, si el jugador está disparando)
     features.push_back((ram.get(28) == 0x01) ? 1.0f : 0.0f);
 
     // Normalizar el número de vidas restantes
     features.push_back(static_cast<double>(alei.lives()) / 5.0f);
 
-    // Rellenar con ceros si faltan características
     while (features.size() < NUM_FEATURES) {
         features.push_back(0.0);
     }
@@ -88,14 +86,14 @@ std::vector<double> extractFeatures(ALEInterface& alei) {
 Action getActionFromIndex(int index) {
     // Solo permitir las acciones de moverse y disparar
     const static Action actions[] = {PLAYER_A_RIGHTFIRE, PLAYER_A_LEFTFIRE};
-    return actions[index % 2]; // Asegurarse de que el índice esté dentro del rango
+    return actions[index % 2];
 }
 
 void usage(char const* pname) {
    std::printf("Uso: %s <ruta_a_la_rom> [train|eval]\n", pname);
 }
 
-// --- FUNCIONES DEL ALGORITMO GENÉTICO ---
+//FUNCIONES DEL ALGORITMO GENÉTICO
 
 // Evalúa la aptitud de un individuo haciéndolo jugar
 void evaluateFitness(Individual& individual, ALEInterface& alei) {

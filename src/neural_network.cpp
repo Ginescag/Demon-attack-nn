@@ -92,7 +92,7 @@ std::vector<double> NeuralNetwork::predict(const std::vector<double>& inputs) co
 
 // Entrenamiento (retropropagación)
 void NeuralNetwork::train(const std::vector<double>& inputs, const std::vector<double>& targets) {
-    // --- Forward pass (necesitamos los valores intermedios) ---
+
     std::vector<double> hidden_sums(numHidden, 0.0);
     std::vector<double> hidden_outputs(numHidden, 0.0);
     
@@ -143,8 +143,6 @@ void NeuralNetwork::train(const std::vector<double>& inputs, const std::vector<d
         final_outputs[i] = final_sums[i]; // Salida lineal
     }
 
-    // --- Backward pass ---
-
     // 1. Calcular error de la capa de salida (delta de salida)
     std::vector<double> output_deltas(numOutputs);
     for (int i = 0; i < numOutputs; ++i) {
@@ -169,7 +167,6 @@ void NeuralNetwork::train(const std::vector<double>& inputs, const std::vector<d
         }
         hidden_deltas[i] = error * relu_derivative(hidden_sums[i]);
         
-        // AÑADIR: Clipeo de gradientes para la capa oculta
         hidden_deltas[i] = std::max(-1.0, std::min(1.0, hidden_deltas[i]));
         
         // Protección contra NaN/Inf
@@ -181,7 +178,6 @@ void NeuralNetwork::train(const std::vector<double>& inputs, const std::vector<d
 
     // 3. Actualizar pesos y sesgos de la capa de salida
     for (int i = 0; i < numOutputs; ++i) {
-        // REDUCIR tasa de aprendizaje efectiva para mayor estabilidad
         double effective_lr = learningRate * 0.1; 
         bias_output[i] += effective_lr * output_deltas[i];
         

@@ -81,23 +81,17 @@ std::vector<double> extractFeatures(ALEInterface& alei) {
         features.push_back(0.0); // Posición relativa neutral
     }
 
-    // NUEVA CARACTERÍSTICA CRÍTICA: Detección mejorada de balas enemigas
-    // Las posiciones de las balas se encuentran en 0x25-0x2D, desde la más baja a la más alta
     double imminent_threat = 0.0;
     double threat_relative_pos = 0.0;
     
     // Buscar balas activas, priorizando las más cercanas al jugador (valores bajos, cerca de 0x25)
     for (int i = 0x25; i <= 0x2D; ++i) {
         int bullet_value = ram.get(i);
-        if (bullet_value > 0) { // Si hay un valor no cero, hay una bala activa
-            // Calcular qué tan cerca está la bala (más cercano a 0x25 = más amenazante)
+        if (bullet_value > 0) {
             double threat_level = 1.0 - ((i - 0x25) / 8.0); // 1.0 para 0x25, 0.0 para 0x2D
             
-            // Si encontramos una bala más amenazante (más cerca del jugador)
             if (threat_level > imminent_threat) {
                 imminent_threat = threat_level;
-                
-                // Para la posición X, usamos el enemigo más cercano como aproximación
                 threat_relative_pos = (closest_enemy_x - player_x) / 160.0;
             }
         }
@@ -117,7 +111,6 @@ std::vector<double> extractFeatures(ALEInterface& alei) {
     return features;
 }
 
-// Mapea el índice de la acción a la acción de ALE
 Action getActionFromIndex(int index) {
     switch (index) {
         case 0: return PLAYER_A_LEFT;
@@ -157,7 +150,7 @@ int main(int argc, char **argv) {
    const double GAMMA = 0.99;
    double epsilon = (evaluation_mode || manual_mode) ? 0.0 : 1.0;
    const double EPSILON_MIN = 0.1; // Epsilon mínimo más alto para mantener exploración
-   const double EPSILON_DECAY = 0.9995; // Decaimiento mucho más lento
+   const double EPSILON_DECAY = 0.9995;
    const int TRAIN_FREQUENCY = 4;
 
    // --- Inicialización de la Red Neuronal ---
@@ -221,7 +214,7 @@ int main(int argc, char **argv) {
             alei.reset_game();
          }
          
-         SDL_Delay(1000/60); // Aproximadamente 60 FPS
+         SDL_Delay(1000/60);
       }
    }
 
@@ -241,7 +234,7 @@ int main(int argc, char **argv) {
       double last_pos_x = state[0] * 160.0; // Convertir posición normalizada a valor real
       bool done = false; // Declarar 'done' aquí, fuera del bucle
 
-      while (!done) { // La condición del bucle ahora depende de nuestra variable 'done'
+      while (!done) {
          step_counter++;
          int action_idx;
          
@@ -262,11 +255,11 @@ int main(int argc, char **argv) {
          reward_t game_reward = alei.act(ale_action);
 
          auto next_state = extractFeatures(alei);
-         done = alei.game_over(); // Primero, comprobar si el juego ha terminado por sí mismo
+         done = alei.game_over();
          const auto& ram = alei.getRAM();
 
-         // --- Actualizar contadores de comportamiento cobarde ---
-         double player_x = next_state[0] * 160.0; // Convertir posición normalizada a valor real
+
+         double player_x = next_state[0] * 160.0;
          bool ha_disparado = (action_idx == 2 || action_idx == 3 || action_idx == 4);
          bool se_ha_movido = std::abs(player_x - last_pos_x) > 2.0;
          
@@ -284,7 +277,7 @@ int main(int argc, char **argv) {
          
          last_pos_x = player_x;
 
-         // --- INGENIERÍA DE RECOMPENSAS ANTI-COBARDE ---
+         //INGENIERÍA DE RECOMPENSAS
          double shaped_reward = 0;
 
          shaped_reward += 5.0;
@@ -296,32 +289,31 @@ int main(int argc, char **argv) {
          }
 
          // 1. PENALIZAR POR NO DISPARAR
-         if (frames_sin_disparar > 60) {  // Si no dispara en ~2 segundo
+         if (frames_sin_disparar > 60) {
              shaped_reward -= 5.0;
          }
 
          // 2. PENALIZAR POR QUEDARSE QUIETO
-         if (frames_sin_moverse > 60) {  // Si no se mueve en ~2 segundos
+         if (frames_sin_moverse > 60) {
              shaped_reward -= 5.0;
          }
 
          // 3. PENALIZAR POR QUEDARSE EN LOS EXTREMOS DEL MAPA
          double normalized_x = next_state[0];
-         // Replace the proportional penalty with a simpler, constant one.
          if (normalized_x < 0.15 || normalized_x > 0.85) {
              shaped_reward -= 10.0; // Penalización constante y más fuerte
          }
 
          // 4. RECOMPENSA MASIVA POR MATAR
          if (ram.get(126) == 0x4E) {
-             shaped_reward += 200.0;  // Duplicar la recompensa por matar
+             shaped_reward += 200.0;
          }
 
          // 5. FINALIZAR EPISODIO SI ES EXTREMADAMENTE COBARDE
          bool extremadamente_cobarde = (frames_sin_disparar > 240) || (frames_sin_moverse > 240);
          if (extremadamente_cobarde && !done) { // Comprobar si no hemos terminado ya
              shaped_reward -= 1000;  // Enorme penalización final
-             done = true;  // ¡Esto ahora terminará el bucle en la siguiente iteración!
+             done = true;
              std::cout << "¡Episodio terminado por comportamiento cobarde!" << std::endl;
          }
          
@@ -388,9 +380,8 @@ int main(int argc, char **argv) {
 }
 
 //=======================================================================================
-//ESTE TROZO ES PARA VER LA RAM
+//ESTE CODIGO ES PARA VER LA RAM
 //=======================================================================================
-
 
 // #include <iostream>
 // #include <cmath>
